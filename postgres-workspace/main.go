@@ -33,7 +33,6 @@ func (m *PostgresWorkspace) connect(ctx context.Context) (*sql.DB, string, error
 		return nil, "", fmt.Errorf("error parsing connection string: %w", err)
 	}
 
-	// make sure the scheme is postgres
 	if u.Scheme != "postgres" {
 		return nil, "", fmt.Errorf("invalid connection string, must be a postgres connection string")
 	}
@@ -154,7 +153,7 @@ func (m *PostgresWorkspace) ListColumnDetails(ctx context.Context, table, column
 }
 
 // Query the database and return the results in comma-separated format
-func (m *PostgresWorkspace) Query(ctx context.Context, query string) (string, error) {
+func (m *PostgresWorkspace) RunQuery(ctx context.Context, query string) (string, error) {
 	db, _, err := m.connect(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error opening database connection: %w", err)
