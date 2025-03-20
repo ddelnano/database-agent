@@ -6,7 +6,7 @@
 
 This module is an example agent that uses an AI Agent to connect to a database and answer questions about the database using human terms. The agent supports both MySQL and PostgreSQL databases (determined by the connection string).
 
-https://github.com/user-attachments/assets/c7b8d869-f0d5-4423-9a91-fa5fe978d591
+https://github.com/user-attachments/assets/d966a4a2-001c-4a5c-9e51-2c1e06ba9b95
 
 ### How do I try it?
 
