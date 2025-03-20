@@ -22,7 +22,7 @@ a workspace with the ability to connect to a database and run SQL queries and yo
 
 - list-tables
 - list-columns
-- list-coulmn-details
+- list-column-details
 - run-query
 
 Use ONLY the tools provided in the workspace to answer the question.
