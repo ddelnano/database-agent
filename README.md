@@ -1,17 +1,27 @@
 # Database Agent 🤖
 
-## Take a database connection and ask the agent questions about your database!
+**Ask your database questions and get answers!**
 
-### What is this?
+## Overview
 
-This module is an example agent that uses an AI Agent to connect to a database and answer questions about the database using human terms. The agent supports both MySQL and PostgreSQL databases (determined by the connection string).
+This is an AI agent that connects to an existing database allows the user to ask plain langugae questions to explore and get information from a database. Supports both MySQL and PostgreSQL databases (determined by the connection string).
+
+Built with [Dagger](https://dagger.io), the open platform for agentic software.
+
+## Demo
 
 https://github.com/user-attachments/assets/d966a4a2-001c-4a5c-9e51-2c1e06ba9b95
 
-### How do I try it?
+## Features
 
-Start a dev Dagger Engine with LLM support using:
-https://docs.dagger.io/ai-agents#initial-setup
+- **Natural Language Interface**: Ask questions in plain language and get answers.
+- **Database Support**: Connects to MySQL and PostgreSQL databases.
+- **Interactive Exploration**: Ask questions about your database schema and data.
+- **Developer experience**: Easy to use and integrate with existing databases.
+
+## Installation
+
+Install [Dagger](https://docs.dagger.io/install)
 
 $ Clone the repo and enter into Dagger Shell:
 ```shell
@@ -59,7 +69,7 @@ dagger
 
 *note: Increase verbosity to 2 or 3 and/or view in Dagger Cloud for best results*
 
-#### Fun to try:
+### Fun to try:
 - Try asking who the most popular actor is.
 - Ask information about a specific table, like the actor table.
 - Ask for the most rented movie.
