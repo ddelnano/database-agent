@@ -1,5 +1,5 @@
 {
-  "name": "postgres-workspace",
+  "name": "database-workspace",
   "engineVersion": "v0.17.0-llm.11",
   "sdk": {
     "source": "go"

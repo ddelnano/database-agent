@@ -1,4 +1,4 @@
-module dagger/postgres-workspace
+module dagger/database-workspace
 
 go 1.23.6
 
@@ -22,6 +22,11 @@ require (
 	go.opentelemetry.io/proto/otlp v1.3.1
 	golang.org/x/sync v0.12.0
 	google.golang.org/grpc v1.71.0
+)
+
+require (
+	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/go-sql-driver/mysql v1.9.0 // indirect
 )
 
 require (

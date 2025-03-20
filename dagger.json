@@ -6,8 +6,8 @@
   },
   "dependencies": [
     {
-      "name": "postgres-workspace",
-      "source": "postgres-workspace"
+      "name": "database-workspace",
+      "source": "database-workspace"
     }
   ]
 }

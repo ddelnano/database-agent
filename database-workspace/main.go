@@ -2,63 +2,84 @@ package main
 
 import (
 	"context"
-	"dagger/postgres-workspace/internal/dagger"
+	"dagger/database-workspace/internal/dagger"
 	"database/sql"
 	"fmt"
 	"net/url"
 	"strings"
 
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v5/stdlib" // Import the pgx driver
 )
 
-type PostgresWorkspace struct {
-	// +private
-	Conn *dagger.Secret
+type DatabaseWorkspace struct {
+	Conn *dagger.Secret // +private
 }
 
-func New(conn *dagger.Secret) *PostgresWorkspace {
-	return &PostgresWorkspace{
+func New(conn *dagger.Secret) *DatabaseWorkspace {
+	return &DatabaseWorkspace{
 		Conn: conn,
 	}
 }
 
-func (m *PostgresWorkspace) connect(ctx context.Context) (*sql.DB, string, error) {
+func (m *DatabaseWorkspace) connect(ctx context.Context) (*sql.DB, string, string, error) {
 	c, err := m.Conn.Plaintext(ctx)
 	if err != nil {
-		return nil, "", fmt.Errorf("error getting plaintext connection: %w", err)
+		return nil, "", "", fmt.Errorf("error getting plaintext connection: %w", err)
+	}
+
+	var (
+		db     *sql.DB
+		dbType string
+	)
+	conn := strings.ToLower(c)
+	switch {
+	case strings.HasPrefix(conn, "postgres://"), strings.HasPrefix(conn, "postgresql://"), strings.Contains(conn, "user=") && strings.Contains(conn, "dbname="):
+		d, err := sql.Open("pgx", c)
+		if err != nil {
+			return nil, "", "", fmt.Errorf("error opening database connection: %w", err)
+		}
+		db = d
+		dbType = "postgres"
+	case strings.HasPrefix(conn, "mysql://"), strings.Contains(conn, "@tcp("), strings.Contains(conn, "user:") && strings.Contains(conn, "@/"):
+		d, err := sql.Open("mysql", c)
+		if err != nil {
+			return nil, "", "", fmt.Errorf("error opening database connection: %w", err)
+		}
+		db = d
+		dbType = "mysql"
+	default:
+		return nil, "", "", fmt.Errorf("unable to determine database type from connection string: %s", c)
 	}
 
 	u, err := url.Parse(c)
 	if err != nil {
-		return nil, "", fmt.Errorf("error parsing connection string: %w", err)
+		return nil, "", "", fmt.Errorf("error parsing connection string: %w", err)
 	}
 
-	if u.Scheme != "postgres" {
-		return nil, "", fmt.Errorf("invalid connection string, must be a postgres connection string")
-	}
-
-	database := strings.TrimPrefix(u.Path, "/")
-
-	db, err := sql.Open("pgx", c)
-	if err != nil {
-		return nil, "", fmt.Errorf("error opening database connection: %w", err)
-	}
-
-	return db, database, nil
+	return db, dbType, strings.TrimPrefix(u.Path, "/"), nil
 }
 
 // List the tables in a database in comma-separated format
-func (m *PostgresWorkspace) ListTables(ctx context.Context,
+func (m *DatabaseWorkspace) ListTables(ctx context.Context,
 	// +optional
 	// +default="public"
 	schema string) (string, error) {
-	db, database, err := m.connect(ctx)
+	db, dbType, database, err := m.connect(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error opening database connection: %w", err)
 	}
 	defer db.Close()
 
-	rows, err := db.QueryContext(ctx, fmt.Sprintf("SELECT table_name FROM information_schema.tables WHERE table_schema = '%s' AND table_catalog = '%s'", schema, database))
+	var query string
+	switch dbType {
+	case "postgres":
+		query = fmt.Sprintf("SELECT table_name FROM information_schema.tables WHERE table_schema = '%s' AND table_catalog = '%s'", schema, database)
+	default:
+		query = "show tables"
+	}
+
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return "", fmt.Errorf("error querying tables: %w", err)
 	}
@@ -85,14 +106,22 @@ func (m *PostgresWorkspace) ListTables(ctx context.Context,
 }
 
 // List the columns in a table in comma-separated format
-func (m *PostgresWorkspace) ListColumns(ctx context.Context, table string) (string, error) {
-	db, database, err := m.connect(ctx)
+func (m *DatabaseWorkspace) ListColumns(ctx context.Context, table string) (string, error) {
+	db, dbType, database, err := m.connect(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error opening database connection: %w", err)
 	}
 	defer db.Close()
 
-	rows, err := db.QueryContext(ctx, fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE table_name = '%s' AND table_catalog = '%s'", table, database))
+	var query string
+	switch dbType {
+	case "postgres":
+		query = fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE table_name = '%s' AND table_catalog = '%s'", table, database)
+	default:
+		query = fmt.Sprintf("show columns from %s", table)
+	}
+
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return "", fmt.Errorf("error querying columns: %w", err)
 	}
@@ -119,14 +148,22 @@ func (m *PostgresWorkspace) ListColumns(ctx context.Context, table string) (stri
 }
 
 // List details on a specific column in a table in comma-separated format with the name,type, and nullability
-func (m *PostgresWorkspace) ListColumnDetails(ctx context.Context, table, column string) (string, error) {
-	db, database, err := m.connect(ctx)
+func (m *DatabaseWorkspace) ListColumnDetails(ctx context.Context, table, column string) (string, error) {
+	db, dbType, database, err := m.connect(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error opening database connection: %w", err)
 	}
 	defer db.Close()
 
-	rows, err := db.QueryContext(ctx, fmt.Sprintf("SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = '%s' AND table_catalog = '%s' AND column_name = '%s'", table, database, column))
+	var query string
+	switch dbType {
+	case "postgres":
+		query = fmt.Sprintf("SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = '%s' AND table_catalog = '%s' AND column_name = '%s'", table, database, column)
+	default:
+		query = fmt.Sprintf("show columns from %s where field = '%s'", table, column)
+	}
+
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return "", fmt.Errorf("error querying columns: %w", err)
 	}
@@ -153,8 +190,8 @@ func (m *PostgresWorkspace) ListColumnDetails(ctx context.Context, table, column
 }
 
 // Query the database and return the results in comma-separated format
-func (m *PostgresWorkspace) RunQuery(ctx context.Context, query string) (string, error) {
-	db, _, err := m.connect(ctx)
+func (m *DatabaseWorkspace) RunQuery(ctx context.Context, query string) (string, error) {
+	db, _, _, err := m.connect(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error opening database connection: %w", err)
 	}
