@@ -1,9 +1,9 @@
 services:
-  mysql:
+  mysql: # root:db@tcp(host.docker.internal:3306)/employees?charset=utf8mb4&parseTime=True&loc=Local
     image: mysql:8
     environment:
       MYSQL_ROOT_PASSWORD: db
-      MYSQL_DATABASE: db
+      MYSQL_DATABASE: employees
       MYSQL_USER: db
       MYSQL_PASSWORD: db
     ports:
