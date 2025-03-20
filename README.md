@@ -42,7 +42,7 @@ pg_restore -U postgres -h 127.0.0.1 -d postgres example-data/dvdrental.tar
 $ Set your DB_URL environment variable to your database connection string.
 
 ```shell
-set DB_URL=postgres://postgres:postgres@host.docker.internal:5432/postgres?sslmode=disable
+export DB_URL=postgres://postgres:postgres@host.docker.internal:5432/postgres?sslmode=disable
 ```
 
 $ Enter the Dagger Shell:
