@@ -107,21 +107,13 @@ func (m *DatabaseWorkspace) ListTables(ctx context.Context,
 
 // List the columns in a table in comma-separated format
 func (m *DatabaseWorkspace) ListColumns(ctx context.Context, table string) (string, error) {
-	db, dbType, database, err := m.connect(ctx)
+	db, _, database, err := m.connect(ctx)
 	if err != nil {
 		return "", fmt.Errorf("error opening database connection: %w", err)
 	}
 	defer db.Close()
 
-	var query string
-	switch dbType {
-	case "postgres":
-		query = fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE table_name = '%s' AND table_catalog = '%s'", table, database)
-	default:
-		query = fmt.Sprintf("show columns from %s", table)
-	}
-
-	rows, err := db.QueryContext(ctx, query)
+	rows, err := db.QueryContext(ctx, fmt.Sprintf("SELECT column_name FROM information_schema.columns WHERE table_name = '%s' AND table_catalog = '%s'", table, database))
 	if err != nil {
 		return "", fmt.Errorf("error querying columns: %w", err)
 	}
@@ -155,12 +147,9 @@ func (m *DatabaseWorkspace) ListColumnDetails(ctx context.Context, table, column
 	}
 	defer db.Close()
 
-	var query string
-	switch dbType {
-	case "postgres":
-		query = fmt.Sprintf("SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = '%s' AND table_catalog = '%s' AND column_name = '%s'", table, database, column)
-	default:
-		query = fmt.Sprintf("show columns from %s where field = '%s'", table, column)
+	query := fmt.Sprintf("SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = '%s' AND table_catalog = '%s' AND column_name = '%s'", table, database, column)
+	if dbType == "mysql" {
+		query = fmt.Sprintf("SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = '%s' AND table_schema = '%s' AND column_name = '%s'", table, database, column)
 	}
 
 	rows, err := db.QueryContext(ctx, query)
