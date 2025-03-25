@@ -1,13 +1,14 @@
 {
   "name": "database-agent",
-  "engineVersion": "v0.17.0",
+  "engineVersion": "v0.17.1",
   "sdk": {
     "source": "go"
   },
   "dependencies": [
     {
-      "name": "database-workspace",
-      "source": "database-workspace"
+      "name": "sql",
+      "source": "github.com/jasonmccallister/sql",
+      "pin": "1d44a24cba337ef649f564551ac9b407a06bdea4"
     }
   ]
 }
