@@ -8,7 +8,7 @@
     {
       "name": "sql",
       "source": "github.com/jasonmccallister/sql",
-      "pin": "1d44a24cba337ef649f564551ac9b407a06bdea4"
+      "pin": "e1267aa57b6a46f8dd2f31aa9507c3e6584281a4"
     }
   ]
 }
