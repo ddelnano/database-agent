@@ -13,9 +13,7 @@ func New(connection *dagger.Secret) *DatabaseAgent { return &DatabaseAgent{Conne
 
 func (m *DatabaseAgent) Ask(ctx context.Context, question string) error {
 	_, err := dag.LLM().
-		WithSQL(
-			dag.SQL(m.Connection),
-		).
+		WithSQL(dag.SQL(m.Connection)).
 		WithPromptVar("question", question).
 		WithPrompt(`You are an expert database administrator. You have been given
 a SQL module with the ability to connect to a database and run SQL queries and you have access to the following tools:
