@@ -12,11 +12,15 @@ type DatabaseAgent struct {
 func New(connection *dagger.Secret) *DatabaseAgent { return &DatabaseAgent{Connection: connection} }
 
 func (m *DatabaseAgent) Ask(ctx context.Context, question string) error {
+	env := dag.Env().
+		WithSQLInput("sql-module", dag.SQL(m.Connection), "The SQL module to use to ask questions").
+		WithStringInput("question", question, "The question being asked about the database")
+
 	_, err := dag.LLM().
-		WithSQL(dag.SQL(m.Connection)).
-		WithPromptVar("question", question).
+		WithEnv(env).
 		WithPrompt(`You are an expert database administrator. You have been given
-a SQL module with the ability to connect to a database and run SQL queries and you have access to the following tools:
+a SQL module named "sql-module" that already has tools with credentials and the ability to connect to the database to run SQL queries.
+You have access to the following tools:
 
 - list-tables
 - list-columns
