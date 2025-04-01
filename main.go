@@ -13,25 +13,15 @@ func New(connection *dagger.Secret) *DatabaseAgent { return &DatabaseAgent{Conne
 
 func (m *DatabaseAgent) Ask(ctx context.Context, question string) error {
 	env := dag.Env().
-		WithSQLInput("sql-module", dag.SQL(m.Connection), "The SQL module to use to ask questions").
+		WithSQLInput("sql", dag.SQL(m.Connection), "The SQL module to use to ask questions").
 		WithStringInput("question", question, "The question being asked about the database")
 
 	_, err := dag.LLM().
 		WithEnv(env).
 		WithPrompt(`You are an expert database administrator. You have been given
-a SQL module named "sql-module" that already has tools with credentials and the ability to connect to the database to run SQL queries.
-You have access to the following tools:
+a SQL module that already has tools with credentials and the ability to connect to the database to run SQL queries.
 
-- list-tables
-- list-columns
-- list-column-details
-- run-query
-
-Use the tools provided by the SQL module to answer the question.
-
-<question>
 $question
-</question>
 
 Always show the SQL query you used to get the result.
 DO NOT STOP UNTIL YOU HAVE ANSWERED THE QUESTION COMPLETELY.`).LastReply(ctx)
