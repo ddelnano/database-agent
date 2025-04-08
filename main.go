@@ -5,15 +5,18 @@ import (
 	"dagger/database-agent/internal/dagger"
 )
 
-type DatabaseAgent struct {
-	Connection *dagger.Secret // +private
-}
+type DatabaseAgent struct{}
 
-func New(connection *dagger.Secret) *DatabaseAgent { return &DatabaseAgent{Connection: connection} }
-
-func (m *DatabaseAgent) Ask(ctx context.Context, question string) error {
+// Ask the database agent a question and get a response
+func (m *DatabaseAgent) Ask(
+	ctx context.Context,
+	// The database connection URL to use
+	dbURL *dagger.Secret,
+	// The question to ask the database agent
+	question string,
+) error {
 	env := dag.Env().
-		WithSQLInput("sql", dag.SQL(m.Connection), "The SQL module to use to ask questions").
+		WithSQLInput("sql", dag.SQL(dbURL), "The SQL module to use to ask questions").
 		WithStringInput("question", question, "The question being asked about the database")
 
 	_, err := dag.LLM().
