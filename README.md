@@ -62,7 +62,7 @@ dagger
 
 ⋈ Ask the agent a question about your database!
 ```shell
-. env:DB_URL | ask "What tables do you have?"
+ask env:DB_URL "What tables do you have?"
 ```
 
 ⋈ Check out the answer.

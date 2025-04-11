@@ -1,14 +1,14 @@
 {
   "name": "database-agent",
-  "engineVersion": "v0.18.0",
+  "engineVersion": "v0.18.2",
   "sdk": {
     "source": "go"
   },
   "dependencies": [
     {
       "name": "sql",
-      "source": "github.com/jasonmccallister/sql",
-      "pin": "406c06890cbe78c1df284dbb23af1600f592806b"
+      "source": "github.com/jasonmccallister/sql@v1.0.0",
+      "pin": "ee36192d6987c019bc6c61d42ec1f55de0b1764c"
     }
   ]
 }
