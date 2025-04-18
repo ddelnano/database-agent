@@ -1,3 +1,0 @@
-[submodule "example-data/mysql"]
-	path = example-data/mysql
-	url = git@github.com:datacharmer/test_db.git
