@@ -15,10 +15,15 @@ func (m *DatabaseAgent) Ask(
 	// The question to ask the database agent
 	question string,
 ) (string, error) {
+	// create the sql module that we will use to inspect the database
+	sql := dag.SQL(dbURL)
+
+	// create an environment for the agent to use
 	env := dag.Env().
 		WithStringInput("question", question, "The question about the database being asked").
-		WithSQLInput("sql", dag.SQL(dbURL), "The SQL module to use to inspect the database")
+		WithSQLInput("sql", sql, "The SQL module to use to inspect the database")
 
+	// create the agent and run it
 	return dag.LLM().
 		WithEnv(env).
 		WithPrompt(`You are an expert database administrator. You have been given
