@@ -10,7 +10,9 @@ Built with [Dagger](https://dagger.io), the open platform for agentic software.
 
 ## Demo
 
-https://github.com/user-attachments/assets/d966a4a2-001c-4a5c-9e51-2c1e06ba9b95
+https://www.youtube.com/watch?v=LzHE0QTkQsM
+
+[![Build an AI Agent That Queries Your Database with Dagger](https://img.youtube.com/vi/LzHE0QTkQsM/0.jpg)](https://www.youtube.com/watch?v=LzHE0QTkQsM)
 
 ## Features
 
