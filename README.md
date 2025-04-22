@@ -8,11 +8,9 @@ This is an AI agent that connects to an existing database allows the user to ask
 
 Built with [Dagger](https://dagger.io), the open platform for agentic software.
 
-## Demo
+## Demo/Video
 
-https://www.youtube.com/watch?v=LzHE0QTkQsM
-
-[![Build an AI Agent That Queries Your Database with Dagger](https://img.youtube.com/vi/LzHE0QTkQsM/0.jpg)](https://www.youtube.com/watch?v=LzHE0QTkQsM)
+[![Build an AI Agent That Queries Your Database with Dagger](https://img.youtube.com/vi/LzHE0QTkQsM/maxresdefault.jpg)](https://www.youtube.com/watch?v=LzHE0QTkQsM)
 
 ## Features
 
