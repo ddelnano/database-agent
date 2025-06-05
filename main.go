@@ -13,6 +13,8 @@ func (m *DatabaseAgent) Ask(
 	// The database connection URL to use
 	dbURL *dagger.Secret,
 	// The question to ask the database agent
+	// +optional
+	// +default="How many rows are in the table?"
 	question string,
 ) (string, error) {
 	// create the sql module that we will use to inspect the database
