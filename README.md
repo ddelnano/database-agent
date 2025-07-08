@@ -73,3 +73,9 @@ ask "DB_URL=postgres://postgres:postgres@host.docker.internal:5432/postgres?sslm
 - Try asking who the most popular actor is.
 - Ask information about a specific table, like the actor table.
 - Ask for the most rented movie.
+
+Sample MCP commands
+
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"select_methods","arguments":{"methods":["DatabaseAgent.ask"]}}}
+
+{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"call_method","arguments":{"method":"DatabaseAgent.ask","self":"DatabaseAgent#1","args":{"dbUrl":"postgres://postgres:postgres@10.129.0.8:5432/postgres?sslmode=disable","question":"What tables are in this database?"}}}}
