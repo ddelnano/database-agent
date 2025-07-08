@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dagger-mcp-server
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dagger-mcp-server
+  template:
+    metadata:
+      labels:
+        app: dagger-mcp-server
+    spec:
+      serviceAccountName: dagger-mcp-server
+      containers:
+      - name: mcp-server
+        image: dagger-mcp-server:latest
+        ports:
+        - containerPort: 8080
+          name: mcp-tcp
+        env:
+        - name: MCP_PORT
+          value: "8080"
+        - name: DAGGER_CLOUD_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: dagger-cloud-token
+              key: token
+              optional: true
+        - name: POSTGRES_URL
+          value: "postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable"
+        - name: MYSQL_URL
+          value: "db:db@tcp(mysql:3306)/employees?charset=utf8mb4&parseTime=True&loc=Local"
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: tmp
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dagger-mcp-server
+  namespace: default
+spec:
+  selector:
+    app: dagger-mcp-server
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: mcp-tcp
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dagger-mcp-server
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dagger-mcp-server
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dagger-mcp-server
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dagger-mcp-server
+subjects:
+- kind: ServiceAccount
+  name: dagger-mcp-server
+  namespace: default
