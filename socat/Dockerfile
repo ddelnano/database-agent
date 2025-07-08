@@ -24,6 +24,9 @@ RUN mkdir -p /app
 COPY mcp-tcp-wrapper.sh /app/mcp-tcp-wrapper.sh
 RUN chmod +x /app/mcp-tcp-wrapper.sh
 
+# TODO(ddelnano): Switch this to a multi-stage build
+COPY socat /app/
+
 # Create non-root user
 # RUN addgroup -g 1000 dagger && \
 #     adduser -D -s /bin/bash -u 1000 -G dagger dagger

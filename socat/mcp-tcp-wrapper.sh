@@ -53,7 +53,7 @@ fi
 
 # Start the persistent dagger MCP server
 echo "Starting persistent dagger MCP server..."
-dagger mcp -m https://github.com/jasonmccallister/database-agent < "$IN_PIPE" > "$OUT_PIPE" &
+dagger mcp -m https://github.com/ddelnano/database-agent < "$IN_PIPE" > "$OUT_PIPE" &
 DAGGER_PID=$!
 
 # Give the dagger process a moment to start
@@ -69,7 +69,7 @@ echo "Dagger MCP server started with PID: $DAGGER_PID"
 
 # Start socat to bridge TCP connections to the named pipes
 echo "Starting TCP bridge on port $PORT..."
-socat TCP-LISTEN:$PORT,reuseaddr,fork SYSTEM:"timeout 1 cat > $IN_PIPE; timeout 1 cat < $OUT_PIPE" &
+socat TCP-LISTEN:$PORT,reuseaddr,fork EXEC:"/app/socat $IN_PIPE $OUT_PIPE",nofork &
 SOCAT_PID=$!
 
 echo "TCP bridge started with PID: $SOCAT_PID"
