@@ -62,7 +62,7 @@ dagger
 
 ⋈ Ask the agent a question about your database!
 ```shell
-ask env:DB_URL "What tables do you have?"
+ask "DB_URL=postgres://postgres:postgres@host.docker.internal:5432/postgres?sslmode=disable" "What tables do you have?"
 ```
 
 ⋈ Check out the answer.

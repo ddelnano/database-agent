@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"dagger/database-agent/internal/dagger"
 )
 
 type DatabaseAgent struct{}
@@ -11,7 +10,7 @@ type DatabaseAgent struct{}
 func (m *DatabaseAgent) Ask(
 	ctx context.Context,
 	// The database connection URL to use
-	dbURL *dagger.Secret,
+	dbURL string,
 	// The question to ask the database agent
 	// +optional
 	question string,

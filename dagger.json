@@ -7,8 +7,8 @@
   "dependencies": [
     {
       "name": "sql",
-      "source": "github.com/jasonmccallister/sql@v1.0.0",
-      "pin": "ee36192d6987c019bc6c61d42ec1f55de0b1764c"
+      "source": "github.com/ddelnano/sql@v1.0.1",
+      "pin": "7d66950454e8c0e7d46ea42708aa8f89fb2bc6cc"
     }
   ]
 }
