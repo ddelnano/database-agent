@@ -21,6 +21,7 @@ RUN apk add --no-cache \
     bash \
     curl \
     docker \
+    strace  \
     ca-certificates
 
 # Install kubectl

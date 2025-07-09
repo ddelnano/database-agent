@@ -2,14 +2,14 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	"strings"
+	"sync"
 	"time"
 )
 
@@ -18,83 +18,105 @@ const (
 	outPipe = "/tmp/mcp-pipes/out"
 )
 
+var (
+	mcpMu  sync.Mutex    // serialize access to MCP
+	outRdr *bufio.Reader // shared reader over outPipe
+)
+
 func main() {
-	// open FIFOs RDWR once per process; share across all requests
 	in, err := os.OpenFile(inPipe, os.O_RDWR, 0)
 	must(err)
 	defer in.Close()
+
 	out, err := os.OpenFile(outPipe, os.O_RDWR, 0)
 	must(err)
 	defer out.Close()
+
+	outRdr = bufio.NewReader(out)
+
+	// optional: pprof on :6060
+	go func() { log.Println(http.ListenAndServe(":6060", nil)) }()
 
 	srv := &http.Server{
 		Addr:              ":8080",
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      30 * time.Second,
-		Handler:           handler(in, out),
+		Handler:           handler(in),
 	}
 
 	log.Println("JSON-RPC bridge on :8080")
 	log.Fatal(srv.ListenAndServe())
 }
 
-func handler(in, out *os.File) http.HandlerFunc {
+func handler(in *os.File) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !strings.EqualFold(r.Method, "POST") {
-			http.Error(w, "only POST accepted", http.StatusMethodNotAllowed)
+		if r.Method != http.MethodPost {
+			http.Error(w, "only POST", http.StatusMethodNotAllowed)
 			return
 		}
-		body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20)) // 1 MiB guard
-		fmt.Println("read body:", string(body), "err:", err)
+		body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
 		if err != nil {
 			http.Error(w, "read error", http.StatusBadRequest)
 			return
 		}
 
-		// send payload terminated by newline
+		//------------------------------------------------------------------
+		// Critical section: one request → one reply on the shared FIFOs
+		//------------------------------------------------------------------
+		mcpMu.Lock()
+		defer mcpMu.Unlock()
+
+		// 1) send request (always terminated by '\n' for MCP)
 		if len(body) == 0 || body[len(body)-1] != '\n' {
 			body = append(body, '\n')
 		}
 		if _, err := in.Write(body); err != nil {
-			http.Error(w, "backend write error", http.StatusBadGateway)
+			http.Error(w, "backend write", http.StatusBadGateway)
 			return
 		}
 
-		// pick a context deadline tied to the client's connection
-		ctx := r.Context()
-		reply, err := readReply(ctx, out)
+		// 2) read exactly one JSON value back
+		raw, err := decodeOneJSON(r.Context())
 		if err != nil {
-			http.Error(w, "backend timeout", http.StatusBadGateway)
+			http.Error(w, "backend read/timeout", http.StatusBadGateway)
 			return
 		}
+
+		//------------------------------------------------------------------
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Content-Length", fmt.Sprint(len(reply)))
+		w.Header().Set("Content-Length", fmt.Sprint(len(raw)))
 		w.WriteHeader(http.StatusOK)
-		w.Write(reply)
+		w.Write(raw)
 	}
 }
 
-// read one newline-terminated reply, but cancel if the client goes away
-func readReply(ctx context.Context, out *os.File) ([]byte, error) {
-	reader := bufio.NewReader(out)
-	type result struct {
-		b   []byte
-		err error
-	}
-	ch := make(chan result, 1)
+// decodeOneJSON reads continuously from outRdr until it successfully
+// decodes one complete JSON value or ctx is cancelled.
+func decodeOneJSON(ctx context.Context) ([]byte, error) {
+	dec := json.NewDecoder(outRdr)
+	for {
+		var raw json.RawMessage
+		err := dec.Decode(&raw)
+		if err == nil {
+			return raw, nil // ✔ got the reply
+		}
+		if err == io.EOF {
+			// worker closed pipe unexpectedly
+			return nil, io.ErrUnexpectedEOF
+		}
 
-	go func() {
-		b, err := reader.ReadBytes('\n')
-		fmt.Println("readBytes:", string(b), "err:", err)
-		ch <- result{b: bytes.TrimRight(b, "\n"), err: err}
-	}()
+		// err is a *syntax* error: bytes weren’t JSON.
+		// Discard one byte and retry so we resync on the next '{'.
+		if serr, ok := err.(*json.SyntaxError); ok {
+			if _, derr := outRdr.Discard(int(serr.Offset)); derr != nil {
+				return nil, derr
+			}
+			continue
+		}
 
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case res := <-ch:
-		return res.b, res.err
+		// Any other error: give up.
+		return nil, err
 	}
 }
 

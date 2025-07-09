@@ -53,7 +53,11 @@ fi
 
 # Start the persistent dagger MCP server
 echo "Starting persistent dagger MCP server..."
-dagger mcp -m https://github.com/ddelnano/database-agent < "$IN_PIPE" > "$OUT_PIPE" &
+strace -ff -tt -T -s 256 \
+  -e trace=read,write,select,poll,ppoll,epoll_wait,epoll_ctl,openat,close \
+  -P "$IN_PIPE" -P "$OUT_PIPE" \
+  -o /tmp/dagger.strace \
+  dagger mcp --allow-llm all -m https://github.com/ddelnano/database-agent < "$IN_PIPE" > "$OUT_PIPE" &
 DAGGER_PID=$!
 
 # Give the dagger process a moment to start
