@@ -11,6 +11,7 @@ func (m *DatabaseAgent) Ask(
 	ctx context.Context,
 	// The database connection URL to use
 	dbURL string,
+	uuid string,
 	// The question to ask the database agent
 	// +optional
 	question string,
@@ -21,7 +22,8 @@ func (m *DatabaseAgent) Ask(
 	// create an environment for the agent to use
 	env := dag.Env().
 		WithStringInput("question", question, "The question about the database being asked").
-		WithSQLInput("sql", sql, "The SQL module to use to inspect the database")
+		WithSQLInput("sql", sql, "The SQL module to use to inspect the database").
+		WithStringInput("CACHE_BUSTER", uuid, "Random string to bust the engine cache. Used to prevent LLM prompt/response caching.")
 
 	// create the agent and run it
 	return dag.LLM().
