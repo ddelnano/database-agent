@@ -78,4 +78,39 @@ Sample MCP commands
 
 {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"select_methods","arguments":{"methods":["DatabaseAgent.ask"]}}}
 
-{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"call_method","arguments":{"method":"DatabaseAgent.ask","self":"DatabaseAgent#1","args":{"dbUrl":"postgres://postgres:postgres@10.129.0.8:5432/postgres?sslmode=disable","question":"What tables are in this database?"}}}}
+{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"call_method","arguments":{"method":"DatabaseAgent.ask","self":"DatabaseAgent#1","args":{"dbUrl":"postgres://postgres:postgres@10.129.0.8:5432/postgres?sslmode=disable","question":"What tables are in this database?","uuid":"1"}}}}
+
+### Local testing
+
+```bash
+# port 6060 is for pprof. Other one is for MCP
+docker run -p 6060:6060 -p 8081:8080 -v /var/run/docker.sock:/var/run/docker.sock -e USE_LOCAL_DAGGER=true -e OPENAI_MODEL='gpt-4.1-nano-2025-04-14' -e OPENAI_API_KEY=<openai api key> -e DAGGER_CLOUD_TOKEN=<dagger cloud token> -it dagger-mcp-server
+```
+
+```bash
+# port 6060 is for pprof. Other one is for MCP
+docker run -p 6060:6060 -p 8081:8080 -v /var/run/docker.sock:/var/run/docker.sock -e USE_LOCAL_DAGGER=true -e OPENAI_MODEL='gpt-4.1-nano-2025-04-14' -e OPENAI_API_KEY=<openai api key> -e DAGGER_CLOUD_TOKEN=<dagger cloud token> -it dagger-mcp-server
+```
+### Local run, k8s dagger engine
+
+```bash
+DAGGER_ENGINE_POD_NAME="$(kubectl get pod \
+    --selector=name=dagger-dagger-helm-engine --namespace=dagger \
+    --output=jsonpath='{.items[0].metadata.name}')"
+export DAGGER_ENGINE_POD_NAME
+
+docker run -p 6060:6060 -p 8081:8080  -e OPENAI_MODEL='gpt-4.1-nano-2025-04-14' -e OPENAI_API_KEY=<open ai key> -e DAGGER_CLOUD_TOKEN=<cloud token> -it dagger-mcp-server
+docker run -p 6060:6060 -p 8081:8080 -e DAGGER_ENGINE_POD_NAME=${DAGGER_ENGINE_POD_NAME} -e OPENAI_MODEL='gpt-4.1-nano-2025-04-14' -e OPENAI_API_KEY=<openai key> -e DAGGER_CLOUD_TOKEN=<dagger cloud token> -v $HOME/.kube:/root/.kube:ro -v $HOME/.aws:/root/.aws:ro  -it dagger-mcp-server
+
+curl -X POST http://localhost:8081 -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"select_methods","arguments":{"methods":["DatabaseAgent.ask"]}}}'
+
+curl -X POST http://localhost:8081 -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"call_method","arguments":{"method":"DatabaseAgent.ask","self":"DatabaseAgent#1","args":{"dbUrl":"postgres://postgres:postgres@postgres.default.svc.cluster.local:5432/postgres?sslmode=disable","question":"What tables are in this database?"}}}}'
+```
+
+### Fully k8s
+```bash
+
+curl -X POST http://localhost:8081 -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"select_methods","arguments":{"methods":["DatabaseAgent.ask"]}}}'
+
+curl -X POST http://localhost:8081 -d '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"call_method","arguments":{"method":"DatabaseAgent.ask","self":"DatabaseAgent#1","args":{"dbUrl":"postgres://postgres:postgres@postgres.default.svc.cluster.local:5432/postgres?sslmode=disable","question":"What tables are in this database?"}}}}'
+```
