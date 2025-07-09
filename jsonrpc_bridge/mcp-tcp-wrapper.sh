@@ -34,7 +34,7 @@ mkfifo "$IN_PIPE" "$OUT_PIPE"
 exec 3<>"$IN_PIPE"
 exec 4<>"$OUT_PIPE"
 
-if [ "$USE_LOCAL_DAGGER" = false && -z "$DAGGER_ENGINE_POD_NAME" ]; then
+if [ "$USE_LOCAL_DAGGER" = false ] && [ -z "$DAGGER_ENGINE_POD_NAME" ]; then
   # Get the dagger engine pod name
   DAGGER_ENGINE_POD_NAME=$(kubectl get pod \
       --selector=name=dagger-dagger-helm-engine --namespace=dagger \
@@ -45,7 +45,7 @@ fi
 
 if [ "$USE_LOCAL_DAGGER" = true ]; then
     echo "Using local dagger instance"
-    unset $DAGGER_ENGINE_POD_NAME
+    unset "$DAGGER_ENGINE_POD_NAME"
 else
     echo "Using remote dagger instance in pod: $DAGGER_ENGINE_POD_NAME"
     export _EXPERIMENTAL_DAGGER_RUNNER_HOST="kube-pod://$DAGGER_ENGINE_POD_NAME?namespace=dagger"
@@ -53,11 +53,7 @@ fi
 
 # Start the persistent dagger MCP server
 echo "Starting persistent dagger MCP server..."
-strace -ff -tt -T -s 256 \
-  -e trace=read,write,select,poll,ppoll,epoll_wait,epoll_ctl,openat,close \
-  -P "$IN_PIPE" -P "$OUT_PIPE" \
-  -o /tmp/dagger.strace \
-  dagger mcp --allow-llm all -m https://github.com/ddelnano/database-agent < "$IN_PIPE" > "$OUT_PIPE" &
+dagger mcp --allow-llm all -m https://github.com/ddelnano/database-agent < "$IN_PIPE" > "$OUT_PIPE" &
 DAGGER_PID=$!
 
 # Give the dagger process a moment to start
@@ -73,7 +69,6 @@ echo "Dagger MCP server started with PID: $DAGGER_PID"
 
 # Start jsonrpc_bridge to bridge TCP connections to the named pipes
 echo "Starting JSON RPC bridge on port $PORT..."
-ls -alh /app
 /app/jsonrpc_bridge &
 SOCAT_PID=$!
 

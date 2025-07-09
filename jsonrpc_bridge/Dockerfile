@@ -21,7 +21,7 @@ RUN apk add --no-cache \
     bash \
     curl \
     docker \
-    strace  \
+    aws-cli \
     ca-certificates
 
 # Install kubectl
